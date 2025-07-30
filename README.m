@@ -1,30 +1,34 @@
--- AUTO FARM LEVEL 1–700 COM MISSÃO FUNCIONAL, AUTO ATAQUE E MODO ESPADA/FRUTA
+-- AUTO FARM LEVEL 1–700 COM AUTO MISSÃO + MODO ESPADA/FRUTA CORRIGIDO
 
 _G.AutoFarmLevel = false
-_G.FarmMode = "Espada" -- Pode ser "Espada" ou "Fruta"
+_G.FarmMode = "Espada" -- ou "Fruta"
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualUser = game:GetService("VirtualUser")
-
 local lp = Players.LocalPlayer
 
--- Função que equipa apenas a ferramenta correta
+-- FUNÇÃO INTELIGENTE PARA EQUIPAR ESPADA OU FRUTA
 local function EquipWeapon()
     for _, tool in pairs(lp.Backpack:GetChildren()) do
         if tool:IsA("Tool") then
-            if _G.FarmMode == "Espada" and string.find(tool.Name, "Sword") then
-                lp.Character.Humanoid:EquipTool(tool)
-                break
-            elseif _G.FarmMode == "Fruta" and not string.find(tool.Name, "Sword") and not string.find(tool.Name, "Gun") then
-                lp.Character.Humanoid:EquipTool(tool)
-                break
+            local name = tool.Name:lower()
+            if _G.FarmMode == "Espada" then
+                if not name:find("gun") and not name:find("fruit") then
+                    lp.Character.Humanoid:EquipTool(tool)
+                    break
+                end
+            elseif _G.FarmMode == "Fruta" then
+                if name:find("fruit") then
+                    lp.Character.Humanoid:EquipTool(tool)
+                    break
+                end
             end
         end
     end
 end
 
--- Ir até o NPC da missão
+-- IR ATÉ O NPC DA MISSÃO
 local function GoToQuestNpc(questName)
     local npcPositions = {
         BanditQuest1 = CFrame.new(1060, 16, 1547),
@@ -40,12 +44,10 @@ local function GoToQuestNpc(questName)
         SkyExp2Quest = CFrame.new(-7900, 5635, -2300),
         FountainQuest = CFrame.new(5250, 40, 4050)
     }
-
     local pos = npcPositions[questName]
     if pos then
-        local char = lp.Character
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        local hrp = lp.Character:WaitForChild("HumanoidRootPart")
+        local humanoid = lp.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid:MoveTo(pos.Position)
             humanoid.MoveToFinished:Wait()
@@ -54,7 +56,7 @@ local function GoToQuestNpc(questName)
     end
 end
 
--- Aceita missão com comando StartQuest
+-- ACEITAR MISSÃO
 local function AcceptQuest(questName, questPart)
     for i = 1, 5 do
         local success = pcall(function()
@@ -65,12 +67,12 @@ local function AcceptQuest(questName, questPart)
     end
 end
 
--- Verifica se missão foi ativada
+-- VERIFICA MISSÃO ATIVA
 local function IsQuestActive()
     return lp.PlayerGui:FindFirstChild("Main") and lp.PlayerGui.Main.Quest.Visible
 end
 
--- Dados da missão por level
+-- DADOS DA MISSÃO POR NÍVEL
 local function GetQuestData(level)
     if level <= 9 then return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit"}
     elseif level <= 14 then return {QuestName = "JungleQuest", QuestPart = 1, Mob = "Monkey"}
@@ -97,7 +99,7 @@ local function GetQuestData(level)
     end
 end
 
--- AutoFarm principal
+-- AUTO FARM PRINCIPAL
 local function AutoFarm()
     while _G.AutoFarmLevel do
         pcall(function()
@@ -125,10 +127,11 @@ local function AutoFarm()
     end
 end
 
--- INTERFACE
+-- INTERFACE: BOTÕES
+
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
--- Botão Auto Farm
+-- Botão ativar Auto Farm
 local farmBtn = Instance.new("TextButton", gui)
 farmBtn.Size = UDim2.new(0, 160, 0, 40)
 farmBtn.Position = UDim2.new(0, 20, 0, 100)
@@ -145,7 +148,7 @@ farmBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Botão de modo de farm (Espada/Fruta)
+-- Botão para trocar modo Espada/Fruta
 local modeBtn = Instance.new("TextButton", gui)
 modeBtn.Size = UDim2.new(0, 160, 0, 40)
 modeBtn.Position = UDim2.new(0, 20, 0, 150)
