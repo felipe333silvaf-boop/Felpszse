@@ -1,17 +1,17 @@
--- AUTO FARM LEVEL 1–700 | MODO ESPADA/FRUTA | ATAQUE CORRIGIDO
+-- AUTO FARM LEVEL 1–700 | COMBATE + ATAQUE POR DISTÂNCIA | FUNCIONAL
 
 _G.AutoFarmLevel = false
-_G.FarmMode = "Espada" -- ou "Fruta"
+_G.FarmMode = "Espada" -- ou "Fruta", "Combate"
+local farmModes = {"Espada", "Fruta", "Combate"}
+local currentMode = 1
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualUser = game:GetService("VirtualUser")
 local lp = Players.LocalPlayer
-
--- Arma atual (evita troca)
 local currentTool = nil
 
--- EQUIPAR ARMA/FRUTA CERTA
+-- EQUIPAR ARMA CORRETA
 local function EquipWeapon()
     if lp.Character:FindFirstChildOfClass("Tool") then return end
     for _, tool in pairs(lp.Backpack:GetChildren()) do
@@ -20,17 +20,20 @@ local function EquipWeapon()
             if _G.FarmMode == "Espada" and not name:find("fruit") and not name:find("gun") then
                 currentTool = tool
                 lp.Character.Humanoid:EquipTool(tool)
-                break
+                return
             elseif _G.FarmMode == "Fruta" and name:find("fruit") then
                 currentTool = tool
                 lp.Character.Humanoid:EquipTool(tool)
-                break
+                return
             end
         end
     end
+    if _G.FarmMode == "Combate" then
+        currentTool = nil
+    end
 end
 
--- IR ATÉ O NPC DA MISSÃO
+-- IR ATÉ NPC
 local function GoToQuestNpc(questName)
     local npcPositions = {
         BanditQuest1 = CFrame.new(1060, 16, 1547),
@@ -69,12 +72,12 @@ local function AcceptQuest(questName, questPart)
     end
 end
 
--- VERIFICAR SE MISSÃO ATIVA
+-- VERIFICAR MISSÃO ATIVA
 local function IsQuestActive()
     return lp.PlayerGui:FindFirstChild("Main") and lp.PlayerGui.Main.Quest.Visible
 end
 
--- TABELA DE MISSÕES
+-- TABELA DE MISSÕES POR LEVEL
 local function GetQuestData(level)
     if level <= 9 then return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit"}
     elseif level <= 14 then return {QuestName = "JungleQuest", QuestPart = 1, Mob = "Monkey"}
@@ -101,7 +104,7 @@ local function GetQuestData(level)
     end
 end
 
--- LOOP PRINCIPAL DE AUTO FARM
+-- LOOP AUTO FARM
 local function AutoFarm()
     while _G.AutoFarmLevel do
         pcall(function()
@@ -116,14 +119,27 @@ local function AutoFarm()
                 for _, enemy in pairs(workspace.Enemies:GetChildren()) do
                     if enemy.Name == data.Mob and enemy:FindFirstChild("HumanoidRootPart") and enemy.Humanoid.Health > 0 then
                         repeat
-                            lp.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
-                            EquipWeapon()
-                            if currentTool and not currentTool.Parent:IsA("Model") then
-                                lp.Character.Humanoid:EquipTool(currentTool)
+                            local char = lp.Character
+                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                            local ehrp = enemy:FindFirstChild("HumanoidRootPart")
+                            if hrp and ehrp then
+                                local dist = (hrp.Position - ehrp.Position).Magnitude
+                                if dist > 5 then
+                                    hrp.CFrame = ehrp.CFrame * CFrame.new(0, 0, 2)
+                                end
+                                if dist <= 30 then
+                                    EquipWeapon()
+                                    if _G.FarmMode == "Combate" or (currentTool and not currentTool.Parent:IsA("Model")) then
+                                        if currentTool then
+                                            lp.Character.Humanoid:EquipTool(currentTool)
+                                        end
+                                        VirtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+                                        wait(0.1)
+                                        VirtualUser:Button1Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+                                    end
+                                end
                             end
-                            VirtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-                            wait(0.1)
-                            VirtualUser:Button1Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+                            wait(0.2)
                         until enemy.Humanoid.Health <= 0 or not _G.AutoFarmLevel
                     end
                 end
@@ -133,7 +149,7 @@ local function AutoFarm()
     end
 end
 
--- INTERFACE (GUI BÁSICA)
+-- GUI SIMPLES
 
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
@@ -154,7 +170,7 @@ farmBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Botão Modo Espada / Fruta
+-- Botão Modo
 local modeBtn = Instance.new("TextButton", gui)
 modeBtn.Size = UDim2.new(0, 160, 0, 40)
 modeBtn.Position = UDim2.new(0, 20, 0, 150)
@@ -164,6 +180,8 @@ modeBtn.TextScaled = true
 modeBtn.Text = "Modo: Espada"
 
 modeBtn.MouseButton1Click:Connect(function()
-    _G.FarmMode = _G.FarmMode == "Espada" and "Fruta" or "Espada"
+    currentMode = currentMode + 1
+    if currentMode > #farmModes then currentMode = 1 end
+    _G.FarmMode = farmModes[currentMode]
     modeBtn.Text = "Modo: " .. _G.FarmMode
 end)
