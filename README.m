@@ -1,4 +1,4 @@
--- AUTO FARM LEVEL 1–700 | Missão Corrigida + Auto Ataque com Espada
+-- AUTO FARM LEVEL 1–700 COM MISSÃO FUNCIONAL E AUTO ATAQUE DE ESPADA
 
 _G.AutoFarmLevel = false
 
@@ -19,7 +19,7 @@ local function EquipWeapon()
     end
 end
 
--- Ir até o NPC da missão usando Humanoid:MoveTo
+-- Ir até o NPC da missão usando MoveTo
 local function GoToQuestNpc(questName)
     local npcPositions = {
         BanditQuest1 = CFrame.new(1060, 16, 1547),
@@ -44,18 +44,20 @@ local function GoToQuestNpc(questName)
         if humanoid then
             humanoid:MoveTo(pos.Position)
             humanoid.MoveToFinished:Wait()
-            wait(2)
+            wait(1.5)
         end
     end
 end
 
--- Aceita missão com tentativas
+-- Aceita missão com comando correto: StartQuest
 local function AcceptQuest(questName, questPart)
-    for i = 1, 3 do
-        local success, _ = pcall(function()
-            return ReplicatedStorage.Remotes.CommF_:InvokeServer("Quest", questName, questPart)
+    for i = 1, 5 do
+        local success = pcall(function()
+            return ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", questName, questPart)
         end)
-        if success then break end
+        if success and lp.PlayerGui.Main.Quest.Visible then
+            break
+        end
         wait(1)
     end
 end
@@ -65,7 +67,7 @@ local function IsQuestActive()
     return lp.PlayerGui:FindFirstChild("Main") and lp.PlayerGui.Main.Quest.Visible
 end
 
--- Dados da missão
+-- Dados da missão por level
 local function GetQuestData(level)
     if level <= 9 then return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit", MobPos = CFrame.new(1060, 16, 1547)}
     elseif level <= 14 then return {QuestName = "JungleQuest", QuestPart = 1, Mob = "Monkey", MobPos = CFrame.new(-1603, 36, 154)}
@@ -92,7 +94,7 @@ local function GetQuestData(level)
     end
 end
 
--- Lógica principal do AutoFarm
+-- AutoFarm principal
 local function AutoFarm()
     while _G.AutoFarmLevel do
         pcall(function()
@@ -120,7 +122,7 @@ local function AutoFarm()
     end
 end
 
--- Botão para ativar/desativar Auto Farm
+-- Interface: botão ativar/desativar
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local button = Instance.new("TextButton", gui)
 
