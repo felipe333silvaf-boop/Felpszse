@@ -1,4 +1,4 @@
--- AUTO FARM LEVEL 1–700 | COMBATE + ATAQUE POR DISTÂNCIA | FUNCIONAL
+-- AUTO FARM LEVEL 1–700 | COMBATE + ATAQUE POR DISTÂNCIA | FUNCIONAL E CORRIGIDO
 
 _G.AutoFarmLevel = false
 _G.FarmMode = "Espada" -- ou "Fruta", "Combate"
@@ -13,7 +13,13 @@ local currentTool = nil
 
 -- EQUIPAR ARMA CORRETA
 local function EquipWeapon()
+    if _G.FarmMode == "Combate" then
+        currentTool = nil
+        return
+    end
+
     if lp.Character:FindFirstChildOfClass("Tool") then return end
+
     for _, tool in pairs(lp.Backpack:GetChildren()) do
         if tool:IsA("Tool") then
             local name = tool.Name:lower()
@@ -27,9 +33,6 @@ local function EquipWeapon()
                 return
             end
         end
-    end
-    if _G.FarmMode == "Combate" then
-        currentTool = nil
     end
 end
 
@@ -149,7 +152,7 @@ local function AutoFarm()
     end
 end
 
--- GUI SIMPLES
+-- GUI
 
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
