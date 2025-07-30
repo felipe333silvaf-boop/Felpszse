@@ -1,25 +1,30 @@
--- AUTO FARM LEVEL 1–700 COM MISSÃO FUNCIONAL E AUTO ATAQUE DE ESPADA
+-- AUTO FARM LEVEL 1–700 COM MISSÃO FUNCIONAL, AUTO ATAQUE E MODO ESPADA/FRUTA
 
 _G.AutoFarmLevel = false
+_G.FarmMode = "Espada" -- Pode ser "Espada" ou "Fruta"
 
-local TweenService = game:GetService("TweenService")
-local VirtualUser = game:GetService("VirtualUser")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualUser = game:GetService("VirtualUser")
 
 local lp = Players.LocalPlayer
 
--- Equipa arma
+-- Função que equipa apenas a ferramenta correta
 local function EquipWeapon()
     for _, tool in pairs(lp.Backpack:GetChildren()) do
         if tool:IsA("Tool") then
-            lp.Character.Humanoid:EquipTool(tool)
-            break
+            if _G.FarmMode == "Espada" and string.find(tool.Name, "Sword") then
+                lp.Character.Humanoid:EquipTool(tool)
+                break
+            elseif _G.FarmMode == "Fruta" and not string.find(tool.Name, "Sword") and not string.find(tool.Name, "Gun") then
+                lp.Character.Humanoid:EquipTool(tool)
+                break
+            end
         end
     end
 end
 
--- Ir até o NPC da missão usando MoveTo
+-- Ir até o NPC da missão
 local function GoToQuestNpc(questName)
     local npcPositions = {
         BanditQuest1 = CFrame.new(1060, 16, 1547),
@@ -49,15 +54,13 @@ local function GoToQuestNpc(questName)
     end
 end
 
--- Aceita missão com comando correto: StartQuest
+-- Aceita missão com comando StartQuest
 local function AcceptQuest(questName, questPart)
     for i = 1, 5 do
         local success = pcall(function()
             return ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", questName, questPart)
         end)
-        if success and lp.PlayerGui.Main.Quest.Visible then
-            break
-        end
+        if success and lp.PlayerGui.Main.Quest.Visible then break end
         wait(1)
     end
 end
@@ -69,28 +72,28 @@ end
 
 -- Dados da missão por level
 local function GetQuestData(level)
-    if level <= 9 then return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit", MobPos = CFrame.new(1060, 16, 1547)}
-    elseif level <= 14 then return {QuestName = "JungleQuest", QuestPart = 1, Mob = "Monkey", MobPos = CFrame.new(-1603, 36, 154)}
-    elseif level <= 29 then return {QuestName = "JungleQuest", QuestPart = 2, Mob = "Gorilla", MobPos = CFrame.new(-1239, 6, -504)}
-    elseif level <= 39 then return {QuestName = "BuggyQuest1", QuestPart = 1, Mob = "Pirate", MobPos = CFrame.new(-1145, 5, 3827)}
-    elseif level <= 59 then return {QuestName = "BuggyQuest1", QuestPart = 2, Mob = "Brute", MobPos = CFrame.new(-1320, 6, 4290)}
-    elseif level <= 74 then return {QuestName = "BuggyQuest2", QuestPart = 1, Mob = "Chief Petty Officer", MobPos = CFrame.new(-4855, 20, 4308)}
-    elseif level <= 89 then return {QuestName = "SkyQuest", QuestPart = 1, Mob = "Sky Bandit", MobPos = CFrame.new(-4951, 278, -2878)}
-    elseif level <= 119 then return {QuestName = "SkyQuest", QuestPart = 2, Mob = "Dark Master", MobPos = CFrame.new(-5250, 390, -2285)}
-    elseif level <= 149 then return {QuestName = "PrisonerQuest", QuestPart = 1, Mob = "Prisoner", MobPos = CFrame.new(5300, 0, 474)}
-    elseif level <= 174 then return {QuestName = "PrisonerQuest", QuestPart = 2, Mob = "Dangerous Prisoner", MobPos = CFrame.new(5360, 0, 900)}
-    elseif level <= 199 then return {QuestName = "ColosseumQuest", QuestPart = 1, Mob = "Toga Warrior", MobPos = CFrame.new(-1576, 7, -2986)}
-    elseif level <= 224 then return {QuestName = "ColosseumQuest", QuestPart = 2, Mob = "Gladiator", MobPos = CFrame.new(-1320, 7, -3250)}
-    elseif level <= 274 then return {QuestName = "MagmaQuest", QuestPart = 1, Mob = "Military Soldier", MobPos = CFrame.new(-5400, 10, 8460)}
-    elseif level <= 299 then return {QuestName = "MagmaQuest", QuestPart = 2, Mob = "Military Spy", MobPos = CFrame.new(-5800, 10, 8800)}
-    elseif level <= 324 then return {QuestName = "FishmanQuest", QuestPart = 1, Mob = "Fishman Warrior", MobPos = CFrame.new(61000, 10, 1800)}
-    elseif level <= 374 then return {QuestName = "FishmanQuest", QuestPart = 2, Mob = "Fishman Commando", MobPos = CFrame.new(61800, 10, 1950)}
-    elseif level <= 399 then return {QuestName = "SkyExp1Quest", QuestPart = 1, Mob = "God's Guard", MobPos = CFrame.new(-4698, 845, -1912)}
-    elseif level <= 449 then return {QuestName = "SkyExp1Quest", QuestPart = 2, Mob = "Shanda", MobPos = CFrame.new(-4800, 845, -1850)}
-    elseif level <= 474 then return {QuestName = "SkyExp2Quest", QuestPart = 1, Mob = "Royal Squad", MobPos = CFrame.new(-7680, 5606, -2325)}
-    elseif level <= 524 then return {QuestName = "SkyExp2Quest", QuestPart = 2, Mob = "Royal Soldier", MobPos = CFrame.new(-7850, 5606, -2500)}
-    elseif level <= 549 then return {QuestName = "FountainQuest", QuestPart = 1, Mob = "Galley Pirate", MobPos = CFrame.new(5585, 45, 3950)}
-    elseif level <= 700 then return {QuestName = "FountainQuest", QuestPart = 2, Mob = "Galley Captain", MobPos = CFrame.new(5730, 45, 4100)}
+    if level <= 9 then return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit"}
+    elseif level <= 14 then return {QuestName = "JungleQuest", QuestPart = 1, Mob = "Monkey"}
+    elseif level <= 29 then return {QuestName = "JungleQuest", QuestPart = 2, Mob = "Gorilla"}
+    elseif level <= 39 then return {QuestName = "BuggyQuest1", QuestPart = 1, Mob = "Pirate"}
+    elseif level <= 59 then return {QuestName = "BuggyQuest1", QuestPart = 2, Mob = "Brute"}
+    elseif level <= 74 then return {QuestName = "BuggyQuest2", QuestPart = 1, Mob = "Chief Petty Officer"}
+    elseif level <= 89 then return {QuestName = "SkyQuest", QuestPart = 1, Mob = "Sky Bandit"}
+    elseif level <= 119 then return {QuestName = "SkyQuest", QuestPart = 2, Mob = "Dark Master"}
+    elseif level <= 149 then return {QuestName = "PrisonerQuest", QuestPart = 1, Mob = "Prisoner"}
+    elseif level <= 174 then return {QuestName = "PrisonerQuest", QuestPart = 2, Mob = "Dangerous Prisoner"}
+    elseif level <= 199 then return {QuestName = "ColosseumQuest", QuestPart = 1, Mob = "Toga Warrior"}
+    elseif level <= 224 then return {QuestName = "ColosseumQuest", QuestPart = 2, Mob = "Gladiator"}
+    elseif level <= 274 then return {QuestName = "MagmaQuest", QuestPart = 1, Mob = "Military Soldier"}
+    elseif level <= 299 then return {QuestName = "MagmaQuest", QuestPart = 2, Mob = "Military Spy"}
+    elseif level <= 324 then return {QuestName = "FishmanQuest", QuestPart = 1, Mob = "Fishman Warrior"}
+    elseif level <= 374 then return {QuestName = "FishmanQuest", QuestPart = 2, Mob = "Fishman Commando"}
+    elseif level <= 399 then return {QuestName = "SkyExp1Quest", QuestPart = 1, Mob = "God's Guard"}
+    elseif level <= 449 then return {QuestName = "SkyExp1Quest", QuestPart = 2, Mob = "Shanda"}
+    elseif level <= 474 then return {QuestName = "SkyExp2Quest", QuestPart = 1, Mob = "Royal Squad"}
+    elseif level <= 524 then return {QuestName = "SkyExp2Quest", QuestPart = 2, Mob = "Royal Soldier"}
+    elseif level <= 549 then return {QuestName = "FountainQuest", QuestPart = 1, Mob = "Galley Pirate"}
+    elseif level <= 700 then return {QuestName = "FountainQuest", QuestPart = 2, Mob = "Galley Captain"}
     end
 end
 
@@ -122,21 +125,36 @@ local function AutoFarm()
     end
 end
 
--- Interface: botão ativar/desativar
+-- INTERFACE
 local gui = Instance.new("ScreenGui", game.CoreGui)
-local button = Instance.new("TextButton", gui)
 
-button.Size = UDim2.new(0, 160, 0, 40)
-button.Position = UDim2.new(0, 20, 0, 100)
-button.BackgroundColor3 = Color3.fromRGB(30, 120, 255)
-button.Text = "Ativar Auto Farm"
-button.TextColor3 = Color3.new(1, 1, 1)
-button.TextScaled = true
+-- Botão Auto Farm
+local farmBtn = Instance.new("TextButton", gui)
+farmBtn.Size = UDim2.new(0, 160, 0, 40)
+farmBtn.Position = UDim2.new(0, 20, 0, 100)
+farmBtn.BackgroundColor3 = Color3.fromRGB(30, 120, 255)
+farmBtn.TextColor3 = Color3.new(1, 1, 1)
+farmBtn.TextScaled = true
+farmBtn.Text = "Ativar Auto Farm"
 
-button.MouseButton1Click:Connect(function()
+farmBtn.MouseButton1Click:Connect(function()
     _G.AutoFarmLevel = not _G.AutoFarmLevel
-    button.Text = _G.AutoFarmLevel and "Desativar Auto Farm" or "Ativar Auto Farm"
+    farmBtn.Text = _G.AutoFarmLevel and "Desativar Auto Farm" or "Ativar Auto Farm"
     if _G.AutoFarmLevel then
         AutoFarm()
     end
+end)
+
+-- Botão de modo de farm (Espada/Fruta)
+local modeBtn = Instance.new("TextButton", gui)
+modeBtn.Size = UDim2.new(0, 160, 0, 40)
+modeBtn.Position = UDim2.new(0, 20, 0, 150)
+modeBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+modeBtn.TextColor3 = Color3.new(1, 1, 1)
+modeBtn.TextScaled = true
+modeBtn.Text = "Modo: Espada"
+
+modeBtn.MouseButton1Click:Connect(function()
+    _G.FarmMode = _G.FarmMode == "Espada" and "Fruta" or "Espada"
+    modeBtn.Text = "Modo: " .. _G.FarmMode
 end)
