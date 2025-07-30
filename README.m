@@ -1,4 +1,4 @@
--- AUTO FARM LEVEL 1–700 COM FIX DE TROCA DE ARMAS E BOTÃO ESPADA/FRUTA
+-- AUTO FARM LEVEL 1–700 | MODO ESPADA/FRUTA | ATAQUE CORRIGIDO
 
 _G.AutoFarmLevel = false
 _G.FarmMode = "Espada" -- ou "Fruta"
@@ -8,13 +8,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualUser = game:GetService("VirtualUser")
 local lp = Players.LocalPlayer
 
--- VARIÁVEL GLOBAL DE FERRAMENTA ATUAL
+-- Arma atual (evita troca)
 local currentTool = nil
 
--- EQUIPAMENTO DE ARMA INTELIGENTE
+-- EQUIPAR ARMA/FRUTA CERTA
 local function EquipWeapon()
     if lp.Character:FindFirstChildOfClass("Tool") then return end
-
     for _, tool in pairs(lp.Backpack:GetChildren()) do
         if tool:IsA("Tool") then
             local name = tool.Name:lower()
@@ -70,12 +69,12 @@ local function AcceptQuest(questName, questPart)
     end
 end
 
--- VERIFICA MISSÃO ATIVA
+-- VERIFICAR SE MISSÃO ATIVA
 local function IsQuestActive()
     return lp.PlayerGui:FindFirstChild("Main") and lp.PlayerGui.Main.Quest.Visible
 end
 
--- DADOS DA MISSÃO POR NÍVEL
+-- TABELA DE MISSÕES
 local function GetQuestData(level)
     if level <= 9 then return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit"}
     elseif level <= 14 then return {QuestName = "JungleQuest", QuestPart = 1, Mob = "Monkey"}
@@ -102,7 +101,7 @@ local function GetQuestData(level)
     end
 end
 
--- AUTO FARM PRINCIPAL
+-- LOOP PRINCIPAL DE AUTO FARM
 local function AutoFarm()
     while _G.AutoFarmLevel do
         pcall(function()
@@ -122,8 +121,9 @@ local function AutoFarm()
                             if currentTool and not currentTool.Parent:IsA("Model") then
                                 lp.Character.Humanoid:EquipTool(currentTool)
                             end
-                            VirtualUser:Button1Down(Vector2.new(), workspace.CurrentCamera.CFrame)
-                            wait(0.3)
+                            VirtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+                            wait(0.1)
+                            VirtualUser:Button1Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
                         until enemy.Humanoid.Health <= 0 or not _G.AutoFarmLevel
                     end
                 end
@@ -133,7 +133,7 @@ local function AutoFarm()
     end
 end
 
--- INTERFACE: BOTÕES
+-- INTERFACE (GUI BÁSICA)
 
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
@@ -154,7 +154,7 @@ farmBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Botão Modo Espada/Fruta
+-- Botão Modo Espada / Fruta
 local modeBtn = Instance.new("TextButton", gui)
 modeBtn.Size = UDim2.new(0, 160, 0, 40)
 modeBtn.Position = UDim2.new(0, 20, 0, 150)
