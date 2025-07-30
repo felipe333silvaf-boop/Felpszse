@@ -1,8 +1,11 @@
--- AUTO FARM LEVEL 1 A 700 - OPEN SOURCE COM CORREÇÃO
+-- SCRIPT AUTO FARM DE LEVEL 1 A 700 - COM ATAQUE REAL DE ESPADA
 
 _G.AutoFarmLevel = false
 
--- Função para equipar arma automaticamente
+local TweenService = game:GetService("TweenService")
+local VirtualUser = game:GetService("VirtualUser")
+
+-- Função para equipar a arma
 local function EquipWeapon()
     for _, tool in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
         if tool:IsA("Tool") then
@@ -12,7 +15,7 @@ local function EquipWeapon()
     end
 end
 
--- Função para pegar dados da missão baseada no level
+-- Função de pegar dados da missão
 local function GetQuestData(level)
     if level <= 9 then
         return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit", MobPos = CFrame.new(1060, 16, 1547)}
@@ -61,7 +64,7 @@ local function GetQuestData(level)
     end
 end
 
--- Vai até o NPC da missão
+-- Ir até o NPC da missão com TweenService
 local function GoToQuestNpc(questName)
     local npcPositions = {
         BanditQuest1 = CFrame.new(1060, 16, 1547),
@@ -80,12 +83,31 @@ local function GoToQuestNpc(questName)
 
     local pos = npcPositions[questName]
     if pos then
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos + Vector3.new(0, 3, 0)
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local tween = TweenService:Create(hrp, TweenInfo.new(2, Enum.EasingStyle.Linear), {CFrame = pos})
+        tween:Play()
+        tween.Completed:Wait()
         wait(1.5)
     end
 end
 
--- Lógica principal do Auto Farm
+-- Aceitar missão com segurança
+local function AcceptQuest(questName, questPart)
+    local success, response = pcall(function()
+        return game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Quest", questName, questPart)
+    end)
+    if not success then
+        warn("Erro ao aceitar missão:", response)
+    end
+end
+
+-- Verificar se a missão foi ativada
+local function IsQuestActive()
+    return game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible
+end
+
+-- AutoFarm principal
 local function AutoFarm()
     while _G.AutoFarmLevel do
         pcall(function()
@@ -94,21 +116,26 @@ local function AutoFarm()
             local data = GetQuestData(level)
 
             if data then
-                -- Aceita missão corretamente indo até o NPC
                 GoToQuestNpc(data.QuestName)
-                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Quest", data.QuestName, data.QuestPart)
-                wait(0.5)
+                AcceptQuest(data.QuestName, data.QuestPart)
+                wait(1)
+
+                if not IsQuestActive() then
+                    warn("Missão não foi ativada.")
+                    return
+                end
+
                 EquipWeapon()
 
-                -- Ataca o inimigo certo
                 for _, enemy in pairs(workspace.Enemies:GetChildren()) do
                     if enemy.Name == data.Mob and enemy:FindFirstChild("HumanoidRootPart") and enemy.Humanoid.Health > 0 then
                         repeat
                             pcall(function()
                                 player.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2)
-                                enemy.Humanoid.Health = enemy.Humanoid.Health - 10
+                                EquipWeapon()
+                                VirtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
                             end)
-                            wait()
+                            wait(0.3)
                         until enemy.Humanoid.Health <= 0 or not _G.AutoFarmLevel
                     end
                 end
@@ -118,7 +145,7 @@ local function AutoFarm()
     end
 end
 
--- Interface flutuante para ativar/desativar
+-- Botão para ativar/desativar
 local gui = Instance.new("ScreenGui", game.CoreGui)
 local button = Instance.new("TextButton", gui)
 
