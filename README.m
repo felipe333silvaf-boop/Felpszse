@@ -1,4 +1,4 @@
--- AUTO FARM LEVEL 1–700 | COMBATE + ATAQUE POR DISTÂNCIA | FUNCIONAL E CORRIGIDO
+-- ✅ AUTO FARM COM FAST ATTACK (ESPADA/FRUTA/COMBATE) | FUNCIONAL COM RONIX
 
 _G.AutoFarmLevel = false
 _G.FarmMode = "Espada" -- ou "Fruta", "Combate"
@@ -7,11 +7,35 @@ local currentMode = 1
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualUser = game:GetService("VirtualUser")
 local lp = Players.LocalPlayer
 local currentTool = nil
 
--- EQUIPAR ARMA CORRETA
+-- FAST ATTACK FUNCTIONS
+local function AttackTarget(target)
+    local tool = lp.Character and lp.Character:FindFirstChildOfClass("Tool")
+    if not tool then return end
+
+    local attackFunc = getsenv(tool:FindFirstChild("Handle"):FindFirstChildWhichIsA("LocalScript", true)).attack
+    local module = require(ReplicatedStorage.CombatFramework.RigLib)
+
+    if attackFunc and module then
+        local rig = lp.Character
+        local pos = target.HumanoidRootPart.Position
+        local result = {
+            Victim = target,
+            VictimPos = pos,
+            Attacker = rig,
+            AttackVelocity = Vector3.new(),
+            Start = tick()
+        }
+
+        attackFunc(result)
+        module.registerattack(rig, tool)
+        module.registerhit(rig, tool, {target})
+    end
+end
+
+-- EQUIPAR A ARMA CERTA
 local function EquipWeapon()
     if _G.FarmMode == "Combate" then
         currentTool = nil
@@ -36,7 +60,7 @@ local function EquipWeapon()
     end
 end
 
--- IR ATÉ NPC
+-- NPCS DE MISSÃO
 local function GoToQuestNpc(questName)
     local npcPositions = {
         BanditQuest1 = CFrame.new(1060, 16, 1547),
@@ -75,12 +99,12 @@ local function AcceptQuest(questName, questPart)
     end
 end
 
--- VERIFICAR MISSÃO ATIVA
+-- VERIFICA MISSÃO ATIVA
 local function IsQuestActive()
     return lp.PlayerGui:FindFirstChild("Main") and lp.PlayerGui.Main.Quest.Visible
 end
 
--- TABELA DE MISSÕES POR LEVEL
+-- MISSÕES POR LEVEL
 local function GetQuestData(level)
     if level <= 9 then return {QuestName = "BanditQuest1", QuestPart = 1, Mob = "Bandit"}
     elseif level <= 14 then return {QuestName = "JungleQuest", QuestPart = 1, Mob = "Monkey"}
@@ -107,7 +131,7 @@ local function GetQuestData(level)
     end
 end
 
--- LOOP AUTO FARM
+-- LOOP FARM
 local function AutoFarm()
     while _G.AutoFarmLevel do
         pcall(function()
@@ -122,8 +146,7 @@ local function AutoFarm()
                 for _, enemy in pairs(workspace.Enemies:GetChildren()) do
                     if enemy.Name == data.Mob and enemy:FindFirstChild("HumanoidRootPart") and enemy.Humanoid.Health > 0 then
                         repeat
-                            local char = lp.Character
-                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                            local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
                             local ehrp = enemy:FindFirstChild("HumanoidRootPart")
                             if hrp and ehrp then
                                 local dist = (hrp.Position - ehrp.Position).Magnitude
@@ -136,9 +159,7 @@ local function AutoFarm()
                                         if currentTool then
                                             lp.Character.Humanoid:EquipTool(currentTool)
                                         end
-                                        VirtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-                                        wait(0.1)
-                                        VirtualUser:Button1Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+                                        AttackTarget(enemy)
                                     end
                                 end
                             end
@@ -153,7 +174,6 @@ local function AutoFarm()
 end
 
 -- GUI
-
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
 -- Botão Auto Farm
