@@ -1,66 +1,25 @@
--- SPEED HUB X REBUILD | AUTO FARM + FAST ATTACK + GUI MOBILE COMPATÍVEL
-
-_G.AutoFarm = false
+-- SPEED HUB X | AUTO FARM OPEN SOURCE RECONSTRUÍDO
+_G.AutoFarm = true
 _G.FarmMode = "Espada" -- ou "Fruta", "Combate"
+
 local lp = game.Players.LocalPlayer
 local rs = game:GetService("ReplicatedStorage")
 local enemies = workspace.Enemies
 
--- GUI
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "SpeedFarmGUI"
-
--- BOTÃO ESCONDER GUI
-local visible = true
-local toggleBtn = Instance.new("TextButton", gui)
-toggleBtn.Size = UDim2.new(0, 100, 0, 30)
-toggleBtn.Position = UDim2.new(0, 10, 0, 10)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-toggleBtn.Text = "Esconder GUI"
-toggleBtn.TextScaled = true
-
-toggleBtn.MouseButton1Click:Connect(function()
-    visible = not visible
-    for _, v in pairs(gui:GetChildren()) do
-        if v:IsA("TextButton") and v ~= toggleBtn then
-            v.Visible = visible
+-- EQUIPAR ARMA
+local function Equip()
+    if _G.FarmMode == "Combate" then return end
+    for _, tool in pairs(lp.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            local name = tool.Name:lower()
+            if (_G.FarmMode == "Espada" and not name:find("fruit")) or
+               (_G.FarmMode == "Fruta" and name:find("fruit")) then
+                lp.Character.Humanoid:EquipTool(tool)
+                break
+            end
         end
     end
-    toggleBtn.Text = visible and "Esconder GUI" or "Mostrar GUI"
-end)
-
--- BOTÃO AUTO FARM
-local farmBtn = Instance.new("TextButton", gui)
-farmBtn.Size = UDim2.new(0, 160, 0, 40)
-farmBtn.Position = UDim2.new(0, 20, 0, 60)
-farmBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-farmBtn.TextColor3 = Color3.new(1, 1, 1)
-farmBtn.TextScaled = true
-farmBtn.Text = "Ativar Auto Farm"
-
-farmBtn.MouseButton1Click:Connect(function()
-    _G.AutoFarm = not _G.AutoFarm
-    farmBtn.Text = _G.AutoFarm and "Desativar Auto Farm" or "Ativar Auto Farm"
-end)
-
--- BOTÃO DE MODO
-local modos = {"Espada", "Fruta", "Combate"}
-local index = 1
-local modeBtn = Instance.new("TextButton", gui)
-modeBtn.Size = UDim2.new(0, 160, 0, 40)
-modeBtn.Position = UDim2.new(0, 20, 0, 110)
-modeBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
-modeBtn.TextColor3 = Color3.new(1, 1, 1)
-modeBtn.TextScaled = true
-modeBtn.Text = "Modo: Espada"
-
-modeBtn.MouseButton1Click:Connect(function()
-    index += 1
-    if index > #modos then index = 1 end
-    _G.FarmMode = modos[index]
-    modeBtn.Text = "Modo: " .. _G.FarmMode
-end)
+end
 
 -- FAST ATTACK
 local function FastAttack(target)
@@ -83,22 +42,7 @@ local function FastAttack(target)
     end
 end
 
--- EQUIPAR ARMA
-local function Equip()
-    if _G.FarmMode == "Combate" then return end
-    for _, tool in pairs(lp.Backpack:GetChildren()) do
-        if tool:IsA("Tool") then
-            local name = tool.Name:lower()
-            if (_G.FarmMode == "Espada" and not name:find("fruit")) or
-               (_G.FarmMode == "Fruta" and name:find("fruit")) then
-                lp.Character.Humanoid:EquipTool(tool)
-                break
-            end
-        end
-    end
-end
-
--- MISSÃO
+-- DADOS DE MISSÃO
 local function GetQuest()
     local lvl = lp.Data.Level.Value
     if lvl <= 9 then return {"BanditQuest1", 1, "Bandit"}
@@ -134,7 +78,7 @@ local function AcceptQuest(qName, qPart)
     end
 end
 
--- LOOP AUTO FARM
+-- LOOP DE AUTO FARM
 spawn(function()
     while wait() do
         if _G.AutoFarm then
@@ -147,11 +91,11 @@ spawn(function()
                 Equip()
                 for _, npc in pairs(enemies:GetChildren()) do
                     if npc.Name == mob and npc:FindFirstChild("HumanoidRootPart") and npc.Humanoid.Health > 0 then
-                        local myHRP = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-                        local enHRP = npc:FindFirstChild("HumanoidRootPart")
-                        if myHRP and enHRP then
-                            myHRP.CFrame = enHRP.CFrame * CFrame.new(0, 0, 2)
-                            if (myHRP.Position - enHRP.Position).Magnitude <= 30 then
+                        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+                        local ehrp = npc:FindFirstChild("HumanoidRootPart")
+                        if hrp and ehrp then
+                            hrp.CFrame = ehrp.CFrame * CFrame.new(0, 0, 2)
+                            if (hrp.Position - ehrp.Position).Magnitude <= 30 then
                                 FastAttack(npc)
                             end
                         end
@@ -162,3 +106,5 @@ spawn(function()
         end
     end
 end)
+
+print("🟢 Auto Farm do Speed Hub X reconstruído. Ative/desative com: _G.AutoFarm = true / false")
